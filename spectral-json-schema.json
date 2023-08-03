@@ -1,0 +1,455 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "@stoplight/spectral-core/meta/ruleset.schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "documentationUrl": {
+      "type": "string",
+      "format": "url",
+      "errorMessage": "must be a valid URL"
+    },
+    "description": {
+      "type": "string"
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/Rule"
+      }
+    },
+    "functions": {
+      "$ref": "#/$defs/Functions"
+    },
+    "functionsDir": {
+      "$ref": "#/$defs/FunctionsDir"
+    },
+    "formats": {
+      "$ref": "#/$defs/Formats"
+    },
+    "extends": {
+      "$ref": "#/$defs/Extends"
+    },
+    "parserOptions": {
+      "type": "object",
+      "properties": {
+        "duplicateKeys": {
+          "$ref": "#/$defs/Severity"
+        },
+        "incompatibleValues": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "additionalProperties": false
+    },
+    "overrides": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "if": {
+          "type": "object",
+          "properties": {
+            "files": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[^#]+#"
+              },
+              "errorMessage": "must be an non-empty array of glob patterns"
+            }
+          },
+          "required": [
+            "files"
+          ]
+        },
+        "then": {
+          "type": "object",
+          "properties": {
+            "files": true,
+            "rules": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/Severity"
+              },
+              "errorMessage": {
+                "enum": "must be a valid severity level"
+              }
+            }
+          },
+          "required": [
+            "rules"
+          ],
+          "additionalProperties": false,
+          "errorMessage": {
+            "required": "must contain rules when JSON Pointers are defined",
+            "additionalProperties": "must not override any other property than rules when JSON Pointers are defined"
+          }
+        },
+        "else": {
+          "allOf": [
+            {
+              "type": "object",
+              "properties": {
+                "files": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "[^#]",
+                    "minLength": 1
+                  },
+                  "errorMessage": "must be an non-empty array of glob patterns"
+                }
+              },
+              "required": [
+                "files"
+              ],
+              "errorMessage": {
+                "type": "must be an override, i.e. { \"files\": [\"v2/**/*.json\"], \"rules\": {} }"
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "formats": {
+                  "$ref": "#/$defs/Formats"
+                },
+                "extends": {
+                  "$ref": "#/properties/extends"
+                },
+                "rules": {
+                  "$ref": "#/properties/rules"
+                },
+                "parserOptions": {
+                  "$ref": "#/properties/parserOptions"
+                },
+                "aliases": {
+                  "$ref": "#/properties/aliases"
+                }
+              },
+              "anyOf": [
+                {
+                  "required": [
+                    "extends"
+                  ]
+                },
+                {
+                  "required": [
+                    "rules"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "minItems": "must not be empty"
+      }
+    },
+    "aliases": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+        "errorMessage": {
+          "pattern": "to avoid confusion the name must match /^[A-Za-z][A-Za-z0-9_-]*$/ regular expression",
+          "minLength": "the name of an alias must not be empty"
+        }
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "targets": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "formats": {
+                  "$ref": "#/$defs/Formats"
+                },
+                "given": {
+                  "$ref": "#/$defs/Given"
+                }
+              },
+              "required": [
+                "formats",
+                "given"
+              ],
+              "errorMessage": "a valid target must contain given and non-empty formats"
+            },
+            "errorMessage": {
+              "minItems": "targets must have at least a single alias definition"
+            }
+          }
+        },
+        "required": [
+          "targets"
+        ],
+        "errorMessage": {
+          "required": "targets must be present and have at least a single alias definition"
+        }
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "anyOf": [
+    {
+      "required": [
+        "extends"
+      ]
+    },
+    {
+      "required": [
+        "rules"
+      ]
+    },
+    {
+      "required": [
+        "overrides"
+      ]
+    }
+  ],
+  "$defs": {
+    "Then": {
+      "type": "object",
+      "allOf": [
+        {
+          "properties": {
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/Function"
+        }
+      ]
+    },
+    "Rule": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "documentationUrl": {
+          "type": "string",
+          "format": "url",
+          "errorMessage": "must be a valid URL"
+        },
+        "recommended": {
+          "type": "boolean"
+        },
+        "given": {
+          "$ref": "#/$defs/Given"
+        },
+        "resolved": {
+          "type": "boolean"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "message": {
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "formats": {
+          "$ref": "#/$defs/Formats"
+        },
+        "then": {
+          "if": {
+            "type": "array"
+          },
+          "then": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Then"
+            }
+          },
+          "else": {
+            "$ref": "#/$defs/Then"
+          }
+        },
+        "type": {
+          "enum": [
+            "style",
+            "validation"
+          ],
+          "type": "string",
+          "errorMessage": "allowed types are \"style\" and \"validation\""
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "given",
+        "then"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^x-": true
+      },
+      "errorMessage": {
+        "required": "the rule must have at least \"given\" and \"then\" properties"
+      }
+    },
+    "Formats": {
+      "$anchor": "formats",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Format"
+      },
+      "errorMessage": "must be an array of formats"
+    },
+    "DiagnosticSeverity": {
+      "enum": [
+        -1,
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "HumanReadableSeverity": {
+      "enum": [
+        "error",
+        "warn",
+        "info",
+        "hint",
+        "off"
+      ]
+    },
+    "Severity": {
+      "$anchor": "severity",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/DiagnosticSeverity"
+        },
+        {
+          "$ref": "#/$defs/HumanReadableSeverity"
+        }
+      ],
+      "errorMessage": "the value has to be one of: 0, 1, 2, 3 or \"error\", \"warn\", \"info\", \"hint\", \"off\""
+    },
+    "Given": {
+      "$anchor": "given",
+      "if": {
+        "type": "array"
+      },
+      "then": {
+        "$anchor": "arrayish-given",
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/PathExpression"
+        },
+        "minItems": 1,
+        "errorMessage": {
+          "minItems": "must be a non-empty array of expressions"
+        }
+      },
+      "else": {
+        "$ref": "#/$defs/PathExpression"
+      }
+    },
+    "PathExpression": {
+      "$id": "path-expression",
+      "if": {
+        "type": "string"
+      },
+      "then": {
+        "type": "string",
+        "if": {
+          "pattern": "^#"
+        },
+        "then": {
+          "x-spectral-runtime": "alias"
+        },
+        "else": {
+          "pattern": "^\\$",
+          "errorMessage": "must be a valid JSON Path expression or a reference to the existing Alias optionally paired with a JSON Path expression subset"
+        }
+      },
+      "else": {
+        "not": {},
+        "errorMessage": "must be a valid JSON Path expression or a reference to the existing Alias optionally paired with a JSON Path expression subset"
+      }
+    },
+    "Extends": {
+      "$anchor": "extends",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "minItems": 2,
+                "additionalItems": false,
+                "items": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "enum": [
+                      "all",
+                      "recommended",
+                      "off"
+                    ],
+                    "errorMessage": "allowed types are \"off\", \"recommended\" and \"all\""
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "Format": {
+      "$anchor": "format",
+      "type": "string",
+      "errorMessage": "must be a valid format"
+    },
+    "Functions": {
+      "$anchor": "functions",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "FunctionsDir": {
+      "$anchor": "functionsDir",
+      "type": "string"
+    },
+    "Function": {
+      "$anchor": "function",
+      "type": "object",
+      "properties": {
+        "function": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "function"
+      ]
+    }
+  }
+}
