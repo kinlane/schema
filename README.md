@@ -1,0 +1,2 @@
+# schema
+Handy JSON Schema.
